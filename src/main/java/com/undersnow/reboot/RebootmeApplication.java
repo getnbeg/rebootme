@@ -31,9 +31,7 @@ class MainController {
 	 
 	DB db = null;
 	@PostMapping("populate")
-	public String pop(
-			
-		@RequestBody	String story) {
+	public String pop( @RequestBody	String story) {
 
 		int size =0;
 		if(!story.isEmpty()) 
@@ -51,7 +49,7 @@ class MainController {
 	@GetMapping("articles/{fromIndex}")
 	public List<String> pop(@PathVariable Integer fromIndex) {
 		List<String> strings = new ArrayList<String>();
-		
+		fromIndex-=7;
 		HTreeMap<String,String> map = (HTreeMap<String, String>)db().hashMap("stories").createOrOpen();
 		for (int i =fromIndex; i < map.size(); i++) {
 		 
@@ -63,6 +61,7 @@ class MainController {
 	
 	@DeleteMapping("articles/{index}")
 	public Boolean del(@PathVariable Integer index) {
+		index-=7;
 		  try {
 			  HTreeMap<String,String> map = (HTreeMap<String, String>)db().hashMap("stories").createOrOpen();
 				map.remove(""+index);
@@ -73,6 +72,17 @@ class MainController {
 		}
 	}
 
+	@DeleteMapping("clear")
+	public Boolean clearAll( ) {
+		  try {
+			  HTreeMap<String,String> map = (HTreeMap<String, String>)db().hashMap("stories").createOrOpen();
+				map.clear();;
+				map.close();
+			return true; 
+		} catch (Exception e) {
+			return false ;
+		}
+	}
 
 	private DB db() {
 		if(db==null || db.isClosed())
