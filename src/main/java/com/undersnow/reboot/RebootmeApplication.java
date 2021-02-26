@@ -4,6 +4,9 @@ import java.util.ArrayList;
 
 import java.util.List;
 
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.HTreeMap;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,33 +28,56 @@ public class RebootmeApplication {
 
 @RestController
 class MainController {
-	
-	List<String> articles =  new ArrayList<String>();
-	
+	 
+	DB db = null;
 	@PostMapping("populate")
 	public String pop(
 			
 		@RequestBody	String story) {
-		if(!story.isEmpty())
-		articles.add(story); 
-		return ""+articles.size(); 
+
+		int size =0;
+		if(!story.isEmpty()) 
+		{
+			HTreeMap<String,String> map = (HTreeMap<String, String>)db().hashMap("stories").createOrOpen();
+			map.put(""+map.size(), story);
+			size=map.size();
+			map.close();
+			
+		}
+		return ""+size; 
 	}
 	
 	
 	@GetMapping("articles/{fromIndex}")
 	public List<String> pop(@PathVariable Integer fromIndex) {
-		 if(articles.size()>fromIndex) return articles.subList(fromIndex, articles.size()); 
-		 return new ArrayList<String>(); 
+		List<String> strings = new ArrayList<String>();
+		
+		HTreeMap<String,String> map = (HTreeMap<String, String>)db().hashMap("stories").createOrOpen();
+		for (int i =fromIndex; i < map.size(); i++) {
+		 
+			strings.add(map.get(""+i));
+		}
+		map.close(); 
+		 return strings; 
 	}
 	
 	@DeleteMapping("articles/{index}")
 	public Boolean del(@PathVariable Integer index) {
 		  try {
-			articles.remove(index);
+			  HTreeMap<String,String> map = (HTreeMap<String, String>)db().hashMap("stories").createOrOpen();
+				map.remove(""+index);
+				map.close();
 			return true; 
 		} catch (Exception e) {
 			return false ;
 		}
+	}
+
+
+	private DB db() {
+		if(db==null || db.isClosed())
+		db = DBMaker.fileDB("file.db").make();
+		return db;
 	}
 	
 	
